@@ -10,31 +10,46 @@ import {
   currencies,
 } from 'countries-list/currencies'
 
+import {
+  iso31661,
+} from 'iso-3166'
+
 
 /*
 |--------------------------------------------------------------------------
-| Elvaris Global Master Seed Generator
+| ELVARIS ERP
+| Global Master Seed Generator
 |--------------------------------------------------------------------------
 |
 | Generates:
 |
 |   supabase/migrations/003_seed_global_masters.sql
 |
-| Universal data:
+| Authoritative country identity:
 |
-|   Countries
-|   Currencies
+|   ISO 3166-1 assigned countries
+|
+| Country fields:
+|
+|   name
+|   ISO alpha-2
+|   ISO alpha-3
+|   ISO numeric
+|   phone code
+|   default currency
+|
+| Currency fields:
+|
+|   ISO alphabetic code
+|   ISO numeric code
+|   symbol
+|   decimal places
+|
+| Other universal masters:
+|
 |   Languages
 |   Units of Measure
 |   Payment Terms
-|
-| Country and currency identifiers include:
-|
-|   Country ISO alpha-2
-|   Country ISO alpha-3
-|   Country ISO numeric
-|   Currency ISO alpha-3
-|   Currency ISO numeric
 |
 | The generated SQL is idempotent.
 |--------------------------------------------------------------------------
@@ -61,56 +76,134 @@ function sqlString(value) {
 }
 
 
-function sqlInteger(value) {
+function formatNumericCode(value) {
   if (
     value === null ||
     value === undefined ||
     value === ''
   ) {
-    return 'null'
+    return null
   }
 
-  const number = Number(value)
-
-  if (!Number.isInteger(number)) {
-    return 'null'
-  }
-
-  return String(number)
+  return String(value).padStart(
+    3,
+    '0',
+  )
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Currency data
+| ISO 3166-1 COUNTRY DATA
+|--------------------------------------------------------------------------
+|
+| iso31661 contains currently assigned
+| ISO 3166-1 entries.
+|
+| Reserved entries such as AC are excluded
+| automatically because they are not part of
+| the assigned-country list.
 |--------------------------------------------------------------------------
 */
 
-const currencyEntries = Object.entries(
-  currencies,
-).sort(
-  ([codeA], [codeB]) =>
-    codeA.localeCompare(codeB),
-)
+const isoCountryEntries =
+  iso31661
+    .filter(
+      (country) =>
+        country.state === 'assigned',
+    )
+    .map(
+      (country) => ({
+        alpha2:
+          String(
+            country.alpha2,
+          ).toUpperCase(),
+
+        alpha3:
+          country.alpha3
+            ? String(
+                country.alpha3,
+              ).toUpperCase()
+            : null,
+
+        numeric:
+          formatNumericCode(
+            country.numeric,
+          ),
+
+        name:
+          country.name,
+      }),
+    )
+    .filter(
+      (country) =>
+        country.alpha2 &&
+        country.alpha3 &&
+        country.numeric &&
+        country.name,
+    )
+    .sort(
+      (a, b) =>
+        a.name.localeCompare(
+          b.name,
+        ),
+    )
+
+
+/*
+|--------------------------------------------------------------------------
+| Build ISO alpha-2 lookup
+|--------------------------------------------------------------------------
+*/
+
+const isoCountryByAlpha2 =
+  new Map(
+    isoCountryEntries.map(
+      (country) => [
+        country.alpha2,
+        country,
+      ],
+    ),
+  )
+
+
+/*
+|--------------------------------------------------------------------------
+| CURRENCY DATA
+|--------------------------------------------------------------------------
+*/
+
+const currencyEntries =
+  Object.entries(
+    currencies,
+  )
+    .sort(
+      ([codeA], [codeB]) =>
+        codeA.localeCompare(
+          codeB,
+        ),
+    )
 
 
 const currencySql =
   currencyEntries
     .map(
       ([code, currency]) => {
+        const currencyCode =
+          code.toUpperCase()
+
         const name =
           currency?.name ??
-          code
+          currencyCode
 
         const symbol =
           currency?.symbol ??
-          code
+          currencyCode
 
         const numericCode =
-          currency?.numeric ??
-          currency?.number ??
-          currency?.isoNumeric ??
-          null
+          formatNumericCode(
+            currency?.numeric,
+          )
 
         const decimalPlaces =
           Number.isInteger(
@@ -120,16 +213,13 @@ const currencySql =
             : 2
 
         return `(
-  ${sqlString(code.toUpperCase())},
+  ${sqlString(
+    currencyCode,
+  )},
   ${sqlString(name)},
   ${sqlString(symbol)},
   ${sqlString(
-    numericCode === null
-      ? null
-      : String(numericCode).padStart(
-          3,
-          '0',
-        ),
+    numericCode,
   )},
   ${decimalPlaces},
   true
@@ -141,81 +231,97 @@ const currencySql =
 
 /*
 |--------------------------------------------------------------------------
-| Country data
+| COUNTRY DATA
+|--------------------------------------------------------------------------
+|
+| ISO 3166 supplies identity.
+| countries-list supplies supplemental phone
+| and currency information.
 |--------------------------------------------------------------------------
 */
 
 const countryEntries =
-  Object.entries(countries).sort(
-    ([, countryA], [, countryB]) =>
-      String(
-        countryA?.name ?? '',
-      ).localeCompare(
-        String(
-          countryB?.name ?? '',
-        ),
-      ),
+  isoCountryEntries.map(
+    (isoCountry) => {
+      const supplemental =
+        countries[
+          isoCountry.alpha2
+        ]
+
+      const phoneCodes =
+        Array.isArray(
+          supplemental?.phone,
+        )
+          ? supplemental.phone
+          : []
+
+      const phoneCode =
+        phoneCodes.length > 0
+          ? `+${phoneCodes[0]}`
+          : null
+
+      const sourceCurrencies =
+        Array.isArray(
+          supplemental?.currency,
+        )
+          ? supplemental.currency
+          : []
+
+      return {
+        alpha2:
+          isoCountry.alpha2,
+
+        alpha3:
+          isoCountry.alpha3,
+
+        numeric:
+          isoCountry.numeric,
+
+        name:
+          isoCountry.name,
+
+        phoneCode,
+
+        sourceCurrencies,
+      }
+    },
   )
 
+
+/*
+|--------------------------------------------------------------------------
+| COUNTRY SQL
+|--------------------------------------------------------------------------
+*/
 
 const countrySql =
   countryEntries
     .map(
-      ([iso2, country]) => {
-        const alpha2 =
-          iso2.toUpperCase()
-
-        const alpha3 =
-          country?.iso3 ??
-          country?.alpha3 ??
-          null
-
-        const numeric =
-          country?.numeric ??
-          country?.isoNumeric ??
-          null
-
-        const phoneCodes =
-          Array.isArray(
-            country?.phone,
-          )
-            ? country.phone
-            : []
-
-        const phoneCode =
-          phoneCodes.length > 0
-            ? `+${phoneCodes[0]}`
-            : null
-
-        return `(
+      (country) => `(
   ${sqlString(
-    country?.name ?? alpha2,
-  )},
-  ${sqlString(alpha2)},
-  ${sqlString(
-    alpha3
-      ? String(alpha3).toUpperCase()
-      : null,
+    country.name,
   )},
   ${sqlString(
-    numeric === null
-      ? null
-      : String(numeric).padStart(
-          3,
-          '0',
-        ),
+    country.alpha2,
   )},
-  ${sqlString(phoneCode)},
+  ${sqlString(
+    country.alpha3,
+  )},
+  ${sqlString(
+    country.numeric,
+  )},
+  ${sqlString(
+    country.phoneCode,
+  )},
   true
-)`
-      },
+)`,
     )
     .join(',\n')
 
 
 /*
 |--------------------------------------------------------------------------
-| Language data
+| LANGUAGE DATA
 |--------------------------------------------------------------------------
 */
 
@@ -224,29 +330,29 @@ const languageEntries =
     languages,
   ).sort(
     ([codeA], [codeB]) =>
-      codeA.localeCompare(codeB),
+      codeA.localeCompare(
+        codeB,
+      ),
   )
 
 
 const languageSql =
   languageEntries
     .map(
-      ([code, language]) => {
-        return `(
+      ([code, language]) => `(
   ${sqlString(code)},
   ${sqlString(
     language?.name ?? code,
   )},
   true
-)`
-      },
+)`,
     )
     .join(',\n')
 
 
 /*
 |--------------------------------------------------------------------------
-| Universal Units of Measure
+| UNITS OF MEASURE
 |--------------------------------------------------------------------------
 */
 
@@ -384,7 +490,7 @@ const uomSql =
 
 /*
 |--------------------------------------------------------------------------
-| Payment Terms
+| PAYMENT TERMS
 |--------------------------------------------------------------------------
 */
 
@@ -455,36 +561,25 @@ const paymentTermsSql =
 
 /*
 |--------------------------------------------------------------------------
-| Default country → currency mappings
-|--------------------------------------------------------------------------
-|
-| The source package can provide one or more currencies.
-| We use the first listed currency as the default where
-| it exists in our currency master.
+| COUNTRY DEFAULT CURRENCIES
 |--------------------------------------------------------------------------
 */
 
 const countryCurrencyUpdates =
   countryEntries
     .map(
-      ([iso2, country]) => {
-        const listedCurrencies =
-          Array.isArray(
-            country?.currency,
-          )
-            ? country.currency
-            : []
-
-        const currencyCode =
-          listedCurrencies.length > 0
-            ? String(
-                listedCurrencies[0],
-              ).toUpperCase()
-            : null
-
-        if (!currencyCode) {
+      (country) => {
+        if (
+          country.sourceCurrencies
+            .length === 0
+        ) {
           return ''
         }
+
+        const currencyCode =
+          String(
+            country.sourceCurrencies[0],
+          ).toUpperCase()
 
         return `update public.countries
 set
@@ -498,8 +593,8 @@ set
   ),
   updated_at = now()
 where iso2_code = ${sqlString(
-    iso2.toUpperCase(),
-  )};`
+  country.alpha2,
+)};`
       },
     )
     .filter(Boolean)
@@ -508,7 +603,7 @@ where iso2_code = ${sqlString(
 
 /*
 |--------------------------------------------------------------------------
-| Generate SQL
+| GENERATED SQL MIGRATION
 |--------------------------------------------------------------------------
 */
 
@@ -519,12 +614,11 @@ const sql = `-- ============================================================
 -- Generated by:
 -- scripts/generate-global-seed.mjs
 --
--- Universal data:
---   Countries
---   Currencies
---   Languages
---   Units of Measure
---   Payment Terms
+-- Authoritative country source:
+-- ISO 3166-1 assigned countries
+--
+-- Currency source:
+-- ISO 4217 dataset from countries-list
 --
 -- This migration is idempotent.
 -- ============================================================
@@ -555,7 +649,35 @@ do update set
 
 
 -- ============================================================
--- 2. COUNTRIES
+-- 2. DEACTIVATE LEGACY / NON-ISO COUNTRY RECORDS
+--
+-- Earlier development seeds contained 252 records.
+-- The authoritative assigned ISO 3166-1 list contains
+-- the current assigned country entries only.
+--
+-- We do not delete legacy records because they may later
+-- become referenced. We deactivate them instead.
+-- ============================================================
+
+update public.countries
+set
+  is_active = false,
+  updated_at = now()
+where is_active = true
+  and iso2_code not in (
+${countryEntries
+  .map(
+    (country) =>
+      `    ${sqlString(
+        country.alpha2,
+      )}`,
+  )
+  .join(',\n')}
+  );
+
+
+-- ============================================================
+-- 3. COUNTRIES
 -- ============================================================
 
 insert into public.countries (
@@ -579,7 +701,7 @@ do update set
 
 
 -- ============================================================
--- 3. LANGUAGES
+-- 4. LANGUAGES
 -- ============================================================
 
 insert into public.languages (
@@ -597,7 +719,7 @@ do update set
 
 
 -- ============================================================
--- 4. UNITS OF MEASURE
+-- 5. UNITS OF MEASURE
 -- ============================================================
 
 insert into public.units_of_measure (
@@ -621,7 +743,7 @@ do update set
 
 
 -- ============================================================
--- 5. PAYMENT TERMS
+-- 6. PAYMENT TERMS
 -- ============================================================
 
 insert into public.payment_terms (
@@ -643,14 +765,14 @@ do update set
 
 
 -- ============================================================
--- 6. COUNTRY DEFAULT CURRENCIES
+-- 7. COUNTRY DEFAULT CURRENCIES
 -- ============================================================
 
 ${countryCurrencyUpdates}
 
 
 -- ============================================================
--- 7. VERIFICATION
+-- 8. FINAL VERIFICATION
 -- ============================================================
 
 do $$
@@ -660,6 +782,10 @@ declare
   language_count integer;
   uom_count integer;
   payment_term_count integer;
+
+  missing_iso3 integer;
+  missing_numeric integer;
+  active_non_iso integer;
 begin
 
   select count(*)
@@ -667,20 +793,24 @@ begin
   from public.currencies
   where is_active = true;
 
+
   select count(*)
   into country_count
   from public.countries
   where is_active = true;
+
 
   select count(*)
   into language_count
   from public.languages
   where is_active = true;
 
+
   select count(*)
   into uom_count
   from public.units_of_measure
   where is_active = true;
+
 
   select count(*)
   into payment_term_count
@@ -688,25 +818,53 @@ begin
   where is_active = true;
 
 
+  select count(*)
+  into missing_iso3
+  from public.countries
+  where is_active = true
+    and iso3_code is null;
+
+
+  select count(*)
+  into missing_numeric
+  from public.countries
+  where is_active = true
+    and numeric_code is null;
+
+
+  select count(*)
+  into active_non_iso
+  from public.countries
+  where is_active = true
+    and (
+      iso3_code is null
+      or numeric_code is null
+    );
+
+
   if currency_count = 0 then
     raise exception
       'Global seed failed: no active currencies found.';
   end if;
+
 
   if country_count = 0 then
     raise exception
       'Global seed failed: no active countries found.';
   end if;
 
+
   if language_count = 0 then
     raise exception
       'Global seed failed: no active languages found.';
   end if;
 
+
   if uom_count = 0 then
     raise exception
       'Global seed failed: no active units of measure found.';
   end if;
+
 
   if payment_term_count = 0 then
     raise exception
@@ -714,8 +872,29 @@ begin
   end if;
 
 
+  if missing_iso3 > 0 then
+    raise exception
+      'Global seed failed: % active countries are missing ISO alpha-3 codes.',
+      missing_iso3;
+  end if;
+
+
+  if missing_numeric > 0 then
+    raise exception
+      'Global seed failed: % active countries are missing ISO numeric codes.',
+      missing_numeric;
+  end if;
+
+
+  if active_non_iso > 0 then
+    raise exception
+      'Global seed failed: % active countries have incomplete ISO identity.',
+      active_non_iso;
+  end if;
+
+
   raise notice
-    'Elvaris global seed completed: % currencies, % countries, % languages, % UOMs, % payment terms.',
+    'Elvaris global seed completed: % currencies, % active countries, % languages, % UOMs, % payment terms.',
     currency_count,
     country_count,
     language_count,
@@ -729,7 +908,7 @@ $$;
 
 /*
 |--------------------------------------------------------------------------
-| Write migration file
+| WRITE FILE
 |--------------------------------------------------------------------------
 */
 
@@ -753,6 +932,7 @@ fs.mkdirSync(
   },
 )
 
+
 fs.writeFileSync(
   outputFile,
   sql,
@@ -762,7 +942,46 @@ fs.writeFileSync(
 
 /*
 |--------------------------------------------------------------------------
-| Console summary
+| GENERATOR VALIDATION
+|--------------------------------------------------------------------------
+*/
+
+const countriesMissingIso3 =
+  countryEntries.filter(
+    (country) =>
+      !country.alpha3,
+  )
+
+const countriesMissingNumeric =
+  countryEntries.filter(
+    (country) =>
+      !country.numeric,
+  )
+
+
+if (
+  countriesMissingIso3.length >
+  0
+) {
+  throw new Error(
+    `Generator failed: ${countriesMissingIso3.length} countries are missing ISO alpha-3 codes.`,
+  )
+}
+
+
+if (
+  countriesMissingNumeric.length >
+  0
+) {
+  throw new Error(
+    `Generator failed: ${countriesMissingNumeric.length} countries are missing ISO numeric codes.`,
+  )
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SUMMARY
 |--------------------------------------------------------------------------
 */
 
