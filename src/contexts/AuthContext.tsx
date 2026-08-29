@@ -27,6 +27,7 @@ type AuthContextValue = {
   session: Session | null
   loading: boolean
   authError: string | null
+  recoveryMode: boolean
 
   login: (
     email: string,
@@ -34,6 +35,8 @@ type AuthContextValue = {
   ) => Promise<void>
 
   logout: () => Promise<void>
+
+  exitRecoveryMode: () => void
 }
 
 
@@ -54,11 +57,13 @@ export function AuthProvider({
   ] =
     useState<Session | null>(null)
 
+
   const [
     loading,
     setLoading,
   ] =
     useState(true)
+
 
   const [
     authError,
@@ -67,6 +72,13 @@ export function AuthProvider({
     useState<string | null>(
       null,
     )
+
+
+  const [
+    recoveryMode,
+    setRecoveryMode,
+  ] =
+    useState(false)
 
 
   useEffect(() => {
@@ -81,14 +93,13 @@ export function AuthProvider({
         } =
           await supabase.auth.getSession()
 
+
         if (error) {
           throw error
         }
 
 
-        if (
-          !mounted
-        ) {
+        if (!mounted) {
           return
         }
 
@@ -113,9 +124,7 @@ export function AuthProvider({
         )
 
       } catch (error) {
-        if (
-          mounted
-        ) {
+        if (mounted) {
           setSession(null)
 
           setAuthError(
@@ -125,9 +134,7 @@ export function AuthProvider({
           )
         }
       } finally {
-        if (
-          mounted
-        ) {
+        if (mounted) {
           setLoading(false)
         }
       }
@@ -143,12 +150,10 @@ export function AuthProvider({
     } =
       supabase.auth.onAuthStateChange(
         async (
-          _event,
+          event,
           newSession,
         ) => {
-          if (
-            !mounted
-          ) {
+          if (!mounted) {
             return
           }
 
@@ -158,13 +163,39 @@ export function AuthProvider({
           )
 
 
-          if (newSession) {
+          /*
+           * Supabase sends this event after
+           * a password recovery link establishes
+           * a recovery session.
+           */
+          if (
+            event ===
+            'PASSWORD_RECOVERY'
+          ) {
+            setRecoveryMode(
+              true,
+            )
+
+            setAuthError(
+              null,
+            )
+
+            return
+          }
+
+
+          /*
+           * For normal authentication events,
+           * ensure the Elvaris application profile
+           * exists.
+           */
+          if (
+            newSession
+          ) {
             try {
               await ensureUserProfile()
 
-              if (
-                mounted
-              ) {
+              if (mounted) {
                 setAuthError(
                   null,
                 )
@@ -172,9 +203,7 @@ export function AuthProvider({
             } catch (error) {
               await supabase.auth.signOut()
 
-              if (
-                mounted
-              ) {
+              if (mounted) {
                 setSession(null)
 
                 setAuthError(
@@ -202,18 +231,20 @@ export function AuthProvider({
     password: string,
   ) {
     setAuthError(null)
+    setRecoveryMode(false)
+
 
     try {
       await signIn(
         email.trim(),
         password,
       )
-
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : 'Unable to sign in.'
+
 
       setAuthError(
         message,
@@ -226,10 +257,26 @@ export function AuthProvider({
 
   async function logout() {
     setAuthError(null)
+    setRecoveryMode(false)
 
     await signOut()
 
     setSession(null)
+  }
+
+
+  function exitRecoveryMode() {
+    setRecoveryMode(false)
+
+    /*
+     * Remove the recovery query parameter
+     * from the browser URL.
+     */
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname,
+    )
   }
 
 
@@ -245,14 +292,19 @@ export function AuthProvider({
 
         authError,
 
+        recoveryMode,
+
         login,
 
         logout,
+
+        exitRecoveryMode,
       }),
       [
         session,
         loading,
         authError,
+        recoveryMode,
       ],
     )
 
@@ -273,11 +325,13 @@ export function useAuth() {
       AuthContext,
     )
 
+
   if (!context) {
     throw new Error(
       'useAuth must be used inside an AuthProvider.',
     )
   }
+
 
   return context
 }

@@ -181,6 +181,115 @@
 }
 
 /* =========================================
+   ELVARIS THEME — DARK
+========================================= */
+
+[data-theme="dark"] {
+  --surface-page: #0f172a;
+  --surface-card: #111827;
+  --surface-muted: #1e293b;
+  --surface-hover: #273449;
+  --surface-selected: #172554;
+
+  --border-light: #273449;
+  --border-default: #334155;
+  --border-strong: #475569;
+  --border-focus: #60a5fa;
+
+  --text-primary: #f8fafc;
+  --text-heading: #f8fafc;
+  --text-body: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-disabled: #64748b;
+  --text-inverse: #ffffff;
+
+  --color-white: #ffffff;
+
+  --color-success-50: #052e16;
+  --color-success-500: #22c55e;
+  --color-success-600: #4ade80;
+  --color-success-700: #86efac;
+
+  --color-warning-50: #451a03;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #fbbf24;
+  --color-warning-700: #fcd34d;
+
+  --color-danger-50: #450a0a;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #f87171;
+  --color-danger-700: #fca5a5;
+
+  --color-info-50: #083344;
+  --color-info-500: #06b6d4;
+  --color-info-600: #22d3ee;
+
+  --shadow-xs:
+    0 1px 2px rgba(0, 0, 0, 0.20);
+
+  --shadow-sm:
+    0 2px 6px rgba(0, 0, 0, 0.24);
+
+  --shadow-md:
+    0 8px 20px rgba(0, 0, 0, 0.28);
+
+  --shadow-lg:
+    0 16px 40px rgba(0, 0, 0, 0.34);
+}
+
+
+/* =========================================
+   ELVARIS THEME — HIGH CONTRAST
+========================================= */
+
+[data-theme="contrast"] {
+  --surface-page: #ffffff;
+  --surface-card: #ffffff;
+  --surface-muted: #f3f4f6;
+  --surface-hover: #e5e7eb;
+  --surface-selected: #dbeafe;
+
+  --border-light: #9ca3af;
+  --border-default: #4b5563;
+  --border-strong: #111827;
+  --border-focus: #1d4ed8;
+
+  --text-primary: #000000;
+  --text-heading: #000000;
+  --text-body: #111827;
+  --text-secondary: #1f2937;
+  --text-muted: #374151;
+  --text-disabled: #6b7280;
+  --text-inverse: #ffffff;
+
+  --color-primary-600: #1d4ed8;
+  --color-primary-700: #1e40af;
+
+  --color-success-600: #047857;
+  --color-success-700: #065f46;
+
+  --color-warning-600: #b45309;
+  --color-warning-700: #92400e;
+
+  --color-danger-600: #b91c1c;
+  --color-danger-700: #991b1b;
+
+  --shadow-xs:
+    0 0 0 1px rgba(17, 24, 39, 0.12);
+
+  --shadow-sm:
+    0 1px 3px rgba(17, 24, 39, 0.16);
+
+  --shadow-md:
+    0 4px 12px rgba(17, 24, 39, 0.18);
+
+  --shadow-lg:
+    0 12px 28px rgba(17, 24, 39, 0.20);
+}
+
+
+/* =========================================
    GLOBAL RESET
 ========================================= */
 
@@ -253,4 +362,26 @@ p {
 
 #root {
   min-height: 100vh;
+}
+
+
+/* =========================================
+   ELVARIS THEME TRANSITION
+========================================= */
+
+html,
+body,
+button,
+input,
+textarea,
+select,
+header,
+aside,
+main,
+section,
+article {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
 }

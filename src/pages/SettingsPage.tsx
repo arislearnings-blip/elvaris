@@ -11,6 +11,11 @@ import {
   Textarea,
 } from '../components/ui'
 
+import {
+  useTheme,
+} from '../contexts/ThemeContext'
+
+
 const currencyOptions = [
   {
     value: 'PKR',
@@ -25,6 +30,7 @@ const currencyOptions = [
     label: 'AED — UAE Dirham',
   },
 ]
+
 
 const fiscalMonthOptions = [
   {
@@ -45,10 +51,39 @@ const fiscalMonthOptions = [
   },
 ]
 
+
+const appearanceOptions = [
+  {
+    value: 'light',
+    label: 'Light',
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+  },
+  {
+    value: 'contrast',
+    label: 'High Contrast',
+  },
+]
+
+
 function SettingsPage() {
+  const {
+    theme,
+    setTheme,
+  } = useTheme()
+
+
   return (
     <section className="module-page">
+
+      {/* ====================================================
+          PAGE HEADER
+      ==================================================== */}
+
       <div className="page-title-row">
+
         <div>
           <p className="eyebrow">
             SETTINGS
@@ -65,6 +100,7 @@ function SettingsPage() {
           </p>
         </div>
 
+
         <div className="page-actions">
           <Button
             variant="primary"
@@ -79,16 +115,58 @@ function SettingsPage() {
             Save Changes
           </Button>
         </div>
+
       </div>
 
+
       <div className="settings-sections">
-        {/* Company Information */}
+
+        {/* ==================================================
+            APPEARANCE
+        ================================================== */}
+
+        <Card
+          title="Appearance"
+          description="Choose the visual appearance used throughout Elvaris."
+          padding="none"
+        >
+          <div className="settings-form-grid">
+
+            <Select
+              id="appearance-theme"
+              label="Appearance"
+              value={theme}
+              onChange={(
+                event,
+              ) =>
+                setTheme(
+                  event.target.value as
+                    | 'light'
+                    | 'dark'
+                    | 'contrast',
+                )
+              }
+              options={
+                appearanceOptions
+              }
+              helpText="This appearance applies throughout the Elvaris application."
+            />
+
+          </div>
+        </Card>
+
+
+        {/* ==================================================
+            COMPANY INFORMATION
+        ================================================== */}
+
         <Card
           title="Company Information"
           description="Basic company information used throughout Elvaris."
           padding="none"
         >
           <div className="settings-form-grid">
+
             <Input
               id="company-name"
               label="Company Name"
@@ -101,7 +179,7 @@ function SettingsPage() {
               id="company-code"
               label="Company Code"
               required
-              placeholder="e.g. MAIN"
+              placeholder="e.g. MO"
               helpText="A short unique identifier for the company."
             />
 
@@ -127,16 +205,22 @@ function SettingsPage() {
               rows={4}
               className="settings-field-full"
             />
+
           </div>
         </Card>
 
-        {/* Fiscal Configuration */}
+
+        {/* ==================================================
+            FISCAL CONFIGURATION
+        ================================================== */}
+
         <Card
           title="Fiscal Configuration"
           description="Define the initial financial environment of the company."
           padding="none"
         >
           <div className="settings-form-grid">
+
             <Input
               id="fiscal-year"
               label="Fiscal Year"
@@ -152,7 +236,9 @@ function SettingsPage() {
               label="Base Currency"
               required
               placeholder="Select currency"
-              options={currencyOptions}
+              options={
+                currencyOptions
+              }
               helpText="The primary currency used for the company."
             />
 
@@ -161,7 +247,9 @@ function SettingsPage() {
               label="Fiscal Year Start"
               required
               placeholder="Select starting month"
-              options={fiscalMonthOptions}
+              options={
+                fiscalMonthOptions
+              }
               helpText="The month in which the fiscal year begins."
             />
 
@@ -189,11 +277,14 @@ function SettingsPage() {
               description="Permit inventory quantities to fall below zero."
               className="settings-field-full"
             />
+
           </div>
         </Card>
+
       </div>
     </section>
   )
 }
+
 
 export default SettingsPage

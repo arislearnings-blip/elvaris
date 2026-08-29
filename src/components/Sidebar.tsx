@@ -1,31 +1,39 @@
 import {
-  BarChart3,
-  Boxes,
-  ClipboardList,
-  Factory,
-  FileText,
   LayoutDashboard,
-  Settings,
+  WalletCards,
   ShoppingCart,
+  Package,
+  Factory,
+  BarChart3,
+  Settings,
+  LogOut,
 } from 'lucide-react'
 
-type NavigationItem = {
-  label: string
-  icon: typeof LayoutDashboard
+import {
+  useAuth,
+} from '../contexts/AuthContext'
+
+
+type SidebarProps = {
+  activePage: string
+  onNavigate: (
+    page: string,
+  ) => void
 }
 
-const navigationItems: NavigationItem[] = [
+
+const navigationItems = [
   {
     label: 'Dashboard',
     icon: LayoutDashboard,
   },
   {
     label: 'Finance',
-    icon: BarChart3,
+    icon: WalletCards,
   },
   {
     label: 'Sales',
-    icon: FileText,
+    icon: ShoppingCart,
   },
   {
     label: 'Purchasing',
@@ -33,7 +41,7 @@ const navigationItems: NavigationItem[] = [
   },
   {
     label: 'Inventory',
-    icon: Boxes,
+    icon: Package,
   },
   {
     label: 'Manufacturing',
@@ -41,21 +49,96 @@ const navigationItems: NavigationItem[] = [
   },
   {
     label: 'Reports',
-    icon: ClipboardList,
+    icon: BarChart3,
+  },
+  {
+    label: 'Settings',
+    icon: Settings,
   },
 ]
 
-type SidebarProps = {
-  activePage: string
-  onNavigate: (page: string) => void
+
+function getInitials(
+  name: string,
+) {
+  const words =
+    name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+
+
+  if (
+    words.length === 0
+  ) {
+    return 'U'
+  }
+
+
+  if (
+    words.length === 1
+  ) {
+    return words[0]
+      .slice(0, 2)
+      .toUpperCase()
+  }
+
+
+  return (
+    words[0][0] +
+    words[words.length - 1][0]
+  ).toUpperCase()
 }
+
 
 function Sidebar({
   activePage,
   onNavigate,
 }: SidebarProps) {
+  const {
+    user,
+    logout,
+    authError,
+  } = useAuth()
+
+
+  const displayName =
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.name ??
+    user?.email ??
+    'Administrator'
+
+
+  const email =
+    user?.email ??
+    'No email available'
+
+
+  const initials =
+    getInitials(
+      displayName,
+    )
+
+
+  async function handleLogout() {
+    try {
+      await logout()
+    } catch (error) {
+      console.error(
+        'Elvaris sign out failed:',
+        error,
+      )
+    }
+  }
+
+
   return (
     <aside className="sidebar">
+
+      {/* ====================================================
+          BRAND
+      ==================================================== */}
+
       <div className="brand">
         <div className="brand-icon">
           <img
@@ -65,37 +148,55 @@ function Sidebar({
         </div>
 
         <div className="brand-content">
-          <h1>Elvaris</h1>
-          <span>Enterprise Platform</span>
+          <h1>
+            Elvaris
+          </h1>
+
+          <span>
+            Enterprise Management Platform
+          </span>
         </div>
       </div>
 
-      <nav
-        className="navigation"
-        aria-label="Main navigation"
-      >
-        <p className="navigation-label">
+
+      {/* ====================================================
+          NAVIGATION
+      ==================================================== */}
+
+      <nav className="navigation">
+
+        <span className="navigation-label">
           WORKSPACE
-        </p>
+        </span>
 
         {navigationItems.map(
-          ({ label, icon: Icon }) => (
+          ({
+            label,
+            icon: Icon,
+          }) => (
             <button
               key={label}
               type="button"
-              title={label}
-              className={`nav-item ${
-                activePage === label
-                  ? 'active'
-                  : ''
-              }`}
+              className={
+                `nav-item ${
+                  activePage === label
+                    ? 'active'
+                    : ''
+                }`
+              }
               onClick={() =>
-                onNavigate(label)
+                onNavigate(
+                  label,
+                )
               }
             >
               <Icon
-                size={18}
-                strokeWidth={1.8}
+                size={19}
+                strokeWidth={
+                  activePage === label
+                    ? 2.1
+                    : 1.8
+                }
                 aria-hidden="true"
               />
 
@@ -105,50 +206,79 @@ function Sidebar({
             </button>
           ),
         )}
+
       </nav>
 
+
+      {/* ====================================================
+          SIDEBAR FOOTER
+      ==================================================== */}
+
       <div className="sidebar-footer">
+
+        {/* Authentication error, if logout fails */}
+        {authError && (
+          <div
+            className="sidebar-auth-error"
+            role="alert"
+          >
+            {authError}
+          </div>
+        )}
+
+
+        <div className="user-card">
+
+          <div
+            className="user-avatar"
+            aria-hidden="true"
+          >
+            {initials}
+          </div>
+
+
+          <div className="user-card-content">
+
+            <strong
+              title={displayName}
+            >
+              {displayName}
+            </strong>
+
+            <span
+              title={email}
+            >
+              {email}
+            </span>
+
+          </div>
+
+        </div>
+
+
         <button
           type="button"
-          title="Settings"
-          className={`nav-item ${
-            activePage === 'Settings'
-              ? 'active'
-              : ''
-          }`}
-          onClick={() =>
-            onNavigate('Settings')
+          className="nav-item sidebar-signout"
+          onClick={
+            handleLogout
           }
         >
-          <Settings
+          <LogOut
             size={18}
             strokeWidth={1.8}
             aria-hidden="true"
           />
 
           <span className="nav-item-label">
-            Settings
+            Sign Out
           </span>
         </button>
 
-        <div className="user-card">
-          <div className="user-avatar">
-            A
-          </div>
-
-          <div className="user-card-content">
-            <strong>
-              Administrator
-            </strong>
-
-            <span>
-              Elvaris Workspace
-            </span>
-          </div>
-        </div>
       </div>
+
     </aside>
   )
 }
+
 
 export default Sidebar

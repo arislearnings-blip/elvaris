@@ -14,6 +14,10 @@ export type AuthResult = {
 }
 
 
+/* ==========================================================
+   SIGN IN
+========================================================== */
+
 export async function signIn(
   email: string,
   password: string,
@@ -27,11 +31,13 @@ export async function signIn(
       password,
     })
 
+
   if (error) {
     throw new Error(
       error.message,
     )
   }
+
 
   if (
     !data.user ||
@@ -42,9 +48,10 @@ export async function signIn(
     )
   }
 
+
   /*
    * Create or retrieve the corresponding
-   * Elvaris user profile.
+   * Elvaris application profile.
    */
   const {
     error:
@@ -54,17 +61,15 @@ export async function signIn(
       'ensure_current_user_profile',
     )
 
+
   if (profileError) {
-    /*
-     * Sign out if the Elvaris application
-     * profile cannot be initialized.
-     */
     await supabase.auth.signOut()
 
     throw new Error(
       `Elvaris profile initialization failed: ${profileError.message}`,
     )
   }
+
 
   return {
     user: data.user,
@@ -73,11 +78,16 @@ export async function signIn(
 }
 
 
+/* ==========================================================
+   SIGN OUT
+========================================================== */
+
 export async function signOut(): Promise<void> {
   const {
     error,
   } =
     await supabase.auth.signOut()
+
 
   if (error) {
     throw new Error(
@@ -86,6 +96,10 @@ export async function signOut(): Promise<void> {
   }
 }
 
+
+/* ==========================================================
+   GET SESSION
+========================================================== */
 
 export async function getSession(): Promise<Session | null> {
   const {
@@ -94,15 +108,21 @@ export async function getSession(): Promise<Session | null> {
   } =
     await supabase.auth.getSession()
 
+
   if (error) {
     throw new Error(
       error.message,
     )
   }
 
+
   return data.session
 }
 
+
+/* ==========================================================
+   ENSURE ELVARIS USER PROFILE
+========================================================== */
 
 export async function ensureUserProfile(): Promise<string> {
   const {
@@ -113,11 +133,13 @@ export async function ensureUserProfile(): Promise<string> {
       'ensure_current_user_profile',
     )
 
+
   if (error) {
     throw new Error(
       error.message,
     )
   }
+
 
   if (!data) {
     throw new Error(
@@ -125,5 +147,36 @@ export async function ensureUserProfile(): Promise<string> {
     )
   }
 
+
   return data as string
+}
+
+
+/* ==========================================================
+   PASSWORD RESET EMAIL
+========================================================== */
+
+export async function sendPasswordResetEmail(
+  email: string,
+): Promise<void> {
+  const redirectTo =
+    `${window.location.origin}/?password-reset=true`
+
+
+  const {
+    error,
+  } =
+    await supabase.auth.resetPasswordForEmail(
+      email.trim(),
+      {
+        redirectTo,
+      },
+    )
+
+
+  if (error) {
+    throw new Error(
+      error.message,
+    )
+  }
 }

@@ -3434,3 +3434,189 @@ input:disabled
       100%;
   }
 }
+
+
+/* =========================================
+   SIDEBAR — AUTHENTICATION
+========================================= */
+
+.sidebar-signout {
+  margin-top:
+    var(--space-2);
+
+  color:
+    var(--text-secondary);
+}
+
+.sidebar-signout:hover {
+  background:
+    var(--surface-hover);
+
+  color:
+    var(--color-danger-600);
+}
+
+.sidebar-signout:focus-visible {
+  outline:
+    2px solid
+    var(--border-focus);
+
+  outline-offset:
+    2px;
+}
+
+.sidebar-auth-error {
+  margin:
+    0
+    8px
+    var(--space-3);
+
+  padding:
+    8px
+    10px;
+
+  border:
+    1px solid
+    var(--color-danger-200);
+
+  border-radius:
+    var(--radius-md);
+
+  background:
+    var(--color-danger-50);
+
+  color:
+    var(--color-danger-700);
+
+  font-size:
+    10px;
+
+  line-height:
+    1.4;
+}
+
+
+
+/* =========================================
+   LOGIN — PASSWORD TOGGLE
+========================================= */
+
+.login-password-toggle {
+  width: 32px;
+  height: 32px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: var(--radius-md);
+
+  background: transparent;
+
+  color: var(--text-muted);
+
+  cursor: pointer;
+
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.login-password-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--text-body);
+}
+
+.login-password-toggle:focus-visible {
+  outline:
+    2px solid
+    var(--border-focus);
+
+  outline-offset:
+    -2px;
+}
+
+
+/* =========================================
+   LOGIN — LINK BUTTON
+========================================= */
+
+.login-link-button {
+  align-self: center;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color:
+    var(--color-primary-600);
+
+  font-size:
+    var(--font-size-sm);
+
+  font-weight:
+    600;
+
+  cursor:
+    pointer;
+}
+
+.login-link-button:hover {
+  color:
+    var(--color-primary-700);
+
+  text-decoration:
+    underline;
+}
+
+.login-link-button:focus-visible {
+  outline:
+    2px solid
+    var(--border-focus);
+
+  outline-offset:
+    3px;
+
+  border-radius:
+    3px;
+}
+
+
+/* =========================================
+   LOGIN — INFO MESSAGE
+========================================= */
+
+.login-info {
+  padding:
+    10px
+    12px;
+
+  border:
+    1px solid
+    var(--color-primary-200);
+
+  border-radius:
+    var(--radius-md);
+
+  background:
+    var(--color-primary-50);
+
+  color:
+    var(--color-primary-700);
+
+  font-size:
+    var(--font-size-sm);
+
+  line-height:
+    var(--line-height-relaxed);
+}
+
+
+
+

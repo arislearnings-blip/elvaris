@@ -18,6 +18,7 @@ import ReportsPage from './pages/ReportsPage'
 import SettingsPage from './pages/SettingsPage'
 import LoginPage from './pages/LoginPage'
 import FirstRunSetupPage from './pages/FirstRunSetupPage'
+import PasswordResetPage from './pages/PasswordResetPage'
 
 import {
   useAuth,
@@ -43,6 +44,7 @@ function LoadingScreen({
   return (
     <main className="login-page">
       <section className="login-card">
+
         <div className="login-brand">
           <div className="login-brand-icon">
             <img
@@ -73,6 +75,7 @@ function LoadingScreen({
         >
           {message}
         </p>
+
       </section>
     </main>
   )
@@ -87,6 +90,7 @@ function WorkspaceError({
   return (
     <main className="login-page">
       <section className="login-card">
+
         <p className="eyebrow">
           WORKSPACE ERROR
         </p>
@@ -106,6 +110,7 @@ function WorkspaceError({
         >
           {message}
         </p>
+
       </section>
     </main>
   )
@@ -116,7 +121,10 @@ function App() {
   const {
     session,
     loading: authLoading,
-  } = useAuth()
+    recoveryMode,
+    exitRecoveryMode,
+  } =
+    useAuth()
 
 
   const [
@@ -258,6 +266,23 @@ function App() {
   }
 
 
+  /*
+   * Recovery sessions are handled before the
+   * normal workspace path.
+   */
+  if (
+    recoveryMode
+  ) {
+    return (
+      <PasswordResetPage
+        onCompleted={
+          exitRecoveryMode
+        }
+      />
+    )
+  }
+
+
   if (!session) {
     return (
       <LoginPage />
@@ -308,6 +333,7 @@ function App() {
 
   return (
     <div className="app-shell">
+
       <Sidebar
         activePage={
           activePage
@@ -318,6 +344,7 @@ function App() {
       />
 
       <div className="workspace">
+
         <Header
           activePage={
             activePage
@@ -325,6 +352,7 @@ function App() {
         />
 
         <main className="content">
+
           {activePage ===
             'Dashboard' && (
             <DashboardPage />
@@ -364,8 +392,11 @@ function App() {
             'Settings' && (
             <SettingsPage />
           )}
+
         </main>
+
       </div>
+
     </div>
   )
 }
