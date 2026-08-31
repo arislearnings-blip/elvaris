@@ -3618,5 +3618,261 @@ input:disabled
 }
 
 
+/* =========================================
+   ELVARIS APPLICATION SHELL — FINAL LAYOUT
+   Replace the previous appended shell block.
+========================================= */
 
+/*
+ * The browser viewport itself must never become
+ * the ERP's scrolling surface.
+ */
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  margin: 0;
+
+  overflow: hidden;
+}
+
+
+/*
+ * Main ERP shell.
+ *
+ * Sidebar and workspace sit side-by-side and
+ * consume the complete viewport.
+ */
+.app-shell {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+
+  overflow: hidden;
+
+  background:
+    var(--surface-page);
+
+  color:
+    var(--text-body);
+}
+
+
+/*
+ * Sidebar.
+ *
+ * The existing sidebar CSS already provides
+ * its own fixed-height behavior. Keep it as
+ * the non-scrolling application navigation.
+ */
+.app-shell > .sidebar {
+  flex: 0 0 var(--sidebar-width);
+
+  min-width: 0;
+  min-height: 0;
+
+  height: 100%;
+
+  overflow: hidden;
+}
+
+
+/*
+ * Workspace occupies everything remaining
+ * beside the sidebar.
+ */
+.workspace {
+  flex: 1 1 auto;
+
+  width: 0;
+
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+
+/*
+ * Header stays at the top.
+ *
+ * Do not make the whole workspace scroll.
+ */
+.workspace > .header {
+  flex: 0 0 var(--header-height);
+
+  min-width: 0;
+
+  min-height:
+    var(--header-height);
+
+  box-sizing:
+    border-box;
+}
+
+
+/*
+ * Main content receives the remaining height.
+ *
+ * Important:
+ * Do NOT use height: 0 here.
+ *
+ * Individual pages such as Journal Voucher
+ * control their own scrolling.
+ */
+.workspace > .content {
+  flex: 1 1 auto;
+
+  width: 100%;
+
+  max-width: none;
+
+  min-width: 0;
+  min-height: 0;
+
+  height: auto;
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+
+  position: relative;
+}
+
+
+/*
+ * Pages mounted inside .content must be able
+ * to consume the complete available height.
+ */
+.workspace > .content > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+
+/*
+ * Journal Voucher specifically needs a true
+ * height-constrained page so that ONLY its
+ * journal grid becomes scrollable.
+ */
+.workspace > .content > .journal-workspace {
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  max-width: none;
+
+  margin: 0;
+}
+
+
+/*
+ * When application pages use their own page
+ * containers, don't let the old global content
+ * width restriction create empty side space.
+ */
+.workspace > .content .module-page {
+  width: 100%;
+  max-width: none;
+
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+
+/*
+ * Dashboard and ordinary pages can still use
+ * their own internal spacing, but the application
+ * shell itself remains full-width.
+ */
+.workspace > .content > .dashboard-intro,
+.workspace > .content > .stats-grid,
+.workspace > .content > .dashboard-grid {
+  max-width: var(--content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/*
+ * Prevent an accidental scrollbar from being
+ * introduced by the page shell itself.
+ *
+ * Individual page components can override this
+ * with overflow:auto where required.
+ */
+.app-shell,
+.workspace,
+.workspace > .content {
+  scrollbar-width: none;
+}
+
+.app-shell::-webkit-scrollbar,
+.workspace::-webkit-scrollbar,
+.workspace > .content::-webkit-scrollbar {
+  display: none;
+}
+
+
+/*
+ * The Journal Voucher is responsible for its
+ * own scrolling. Its grid-scroll element must
+ * remain the scrolling surface.
+ */
+.journal-workspace {
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+
+/*
+ * This is the ONLY normal scrolling surface
+ * for the Journal Voucher grid.
+ */
+.journal-grid-scroll {
+  flex: 1 1 auto;
+
+  min-width: 0;
+  min-height: 0;
+
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+
+/*
+ * Keep the JV's fixed regions outside the
+ * scrolling element.
+ */
+.journal-workspace > .journal-top,
+.journal-workspace > .journal-toolbar,
+.journal-workspace > .journal-document,
+.journal-workspace > .journal-document-bar,
+.journal-workspace > .journal-alert,
+.journal-workspace > .journal-footer,
+.journal-workspace > .journal-grid-navigation {
+  flex-shrink: 0;
+}
 
